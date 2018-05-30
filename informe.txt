@@ -1,0 +1,744 @@
+﻿= Introducción a la Programación: Trabajo Práctico 1
+Martin Zavalla Gamarra <martinkapo99@gmail.com>;
+Facundo Ayala <Faacu_ayala@gmail.com>;
+Maxi Peralta <maxicarp185@gmail.com> 
+{docdate}. Docentes Daniel Rondelli y Sabrina Castro (COM-01)
+:numbered:
+:source-highlighter: highlight.js
+:tabsize: 4
+
+== Introducción
+En este trabajo se realizara un juego de golf en java .
+El escenario del juego se representa por un area rectangular que simula una cancha de minigolf
+vista desde arriba. En algún lugar del campo se sitúa inicialmente la pelota y en otro se ubica
+el hoyo. El objetivo de los jugadores es golpear la pelota para embocarla en el hoyo, utilizando
+la menor cantidad de golpes posible.
+
+El jugador podrá usar el teclado para orientar la dirección en la cual saldrá la pelota. 
+Para ello, el juego cuenta con una flecha orientadora que sirve para elegir la dirección del golpe. 
+Además, el jugador podra elegir también la potencia con que pretende dar el golpe y por lo tanto 
+influirá en qué tan lejos llegue la pelota.
+
+Por otro lado, el simulador contará con algunas trampas distribuidas dentro del mapa.
+tales como la trampas de arena, en las cuales la pelota viajará mucho máslento que en el campo normal,
+o bien trampas de agua, en las cuales la pelota se hunde y porlo tanto se contabilizarán penalizaciones al juego.
+
+== Descripción
+
+El juego inicia dibujando en primer lugar el entorno del juego , este incluye el campo, la pelota ,
+la flecha , las trampas de agua y arena , el hoyo ,la barra de carga y la bandera.
+Cabe mencionar que dentro del entorno  la bandera, el campo y la barra de carga son los unicos
+que no cumplen funcion dentro del juego ,mas que unicamente ser un material de decoracion.
+
+Despues, al dar la orden de pegarle a la pelota , esta recibe la información de hacia a donde y 
+con que velocidad tiene que moverse dependiendo de la potencia y la direccion elejida por el jugador.
+La pelota puede saber si entra en contacto con algun obstaculo y por lo tanto reccionar a su efecto
+o si toca la pared y por este motivo rebotar en el respectivo borde de pantalla,
+hasta que se redusca su velocidad y se detenga por completo para poder realizar otro golpe.
+Cabe mencionar que la flecha de direccion se desdibuja caundo la pelota se encuentra en movimiento y
+vuelve a dibujarse caundo se detiene.
+
+y por ultimo cuando la pelota logre entrar al hoyo , esta se borrara junto con la flecha que la acompañaba en cada tiro
+efectuado por el jugador.
+
+===dificultades
+
+_Rebote_
+Primero tuvimos problemas con el rebote de la pelota debido a que el angulo de la flecha y la pelota quedaban distintos 
+por un calculo de la funcion mover dentro de la clase pelota. Para solucionarlo creamos un condicional en la clase juego 
+para que las variables que intervenian en el calculo se inicializen en 1 y asi la pelota pueda tener el mismo angulo que la flecha.
+
+_Potencia_ 
+Otro problema que se nos presento fue que no podiamos hacer que decresca la barra de potencia, debido a que
+la funcion que implementamos cumplia solo una vez la orden de decender la barra y volvia a subir
+para solucionarlo, creamos una variable bandera de instancia que sea true cuando este en el limite inferior y false 
+cuando estaba en el superior y en base a eso resta o suma Y para que suba o baje respectivamente.
+
+_Trampa_
+Tambien tuvimos problemas en cuanto a  las colisiones de arena y agua debido a que usamos iamgenes sin tener ningun datos sobre sus dimensiones,
+pero lo solucionamos creando objetos invisiblespara aprovechar sus dimensiones .
+Por ejemplo en la trampa de arena dibujamos un objeto rectangulo (invisible) debajo de la imagen,
+y calculando su X y su Y (teniendo en cuenta el ancho y alto) lo diferenciamos con el X y Y de la pelota. 
+Para la tramap de agua hicimos lo mismo solo que teniendo en cuenta el diametro en ves de el ancho y el alto.
+
+_Hoyo_ 
+Para hacer que la pelota entre en el hoyo creamos una variable bandera , y calculamos la diferencia en x (entre la pelota y el hoyo),
+y la diferencia en y, y luego la distancia entre las diferencias y en base a esa distancia le restamos lo que se supone
+es el diametro de la pelota.
+
+== Implementación
+
+*CLASE JUEGO*
+
+[source, java]
+----
+
+public class Juego extends InterfaceJuego
+{
+	// El objeto Entorno que controla el tiempo y otros
+	
+	private Entorno entorno;
+
+	//Variables y métodos propios de cada grupo
+	
+	
+	
+	private Pelotita pelotita;
+	private Flecha flecha;
+	private Linea linea;
+	private Agua agua;
+	private Agua agua2;
+	private Arena arena;
+	private Arena arena2;
+	private Carga carga;
+	private Hoyo hoyo;
+	private int golpes;
+	private int contador = 15;
+	private boolean estadopelota=true;
+	private boolean estadoflecha=true;
+	private boolean menu=true;
+	private boolean creditos=true;
+	private boolean gana=true;
+	private boolean banderabarra;
+	private boolean banderacarga;
+	private boolean estadogolpe=true;
+	private boolean Finalizo;
+	private boolean Empezo;
+	private java.awt.Image hoyito;
+	private java.awt.Image campo;
+	private java.awt.Image bandera;
+	private java.awt.Image water;
+	private java.awt.Image water2;
+	private java.awt.Image pelo;
+	private java.awt.Image sand;
+	private java.awt.Image sand2;
+	private java.awt.Image fondomenu;
+	private java.awt.Image credito;
+	private java.awt.Image ganaimagen;
+	private Clip musicagana;
+	
+	
+	Juego()
+	{
+		// Inicializa el objeto entorno
+
+		this.entorno = new Entorno(this, "Golfito - Grupo Zavalla - Peralta - Ayala - V0.01", 800, 600);
+		
+		
+		// Inicializar lo que haga falta para el juego
+		
+		
+		this.credito = Herramientas.cargarImagen("creditos.jpg");
+		this.ganaimagen = Herramientas.cargarImagen("ganador.jpg");
+		this.pelotita = new Pelotita(40,60,0,1.5,26);
+		this.flecha = new Flecha(pelotita.getX()+1,pelotita.getY()+1,1.5);
+		this.campo = Herramientas.cargarImagen("cesped.png");
+		this.bandera = Herramientas.cargarImagen("bandera.png");
+		this.agua = new Agua(170,110,150);
+		this.agua2 = new Agua(710,450,150);
+		this.arena = new Arena(180,470,165,115);
+		this.arena2 = new Arena(480,240,165,115);
+		this.hoyo = new Hoyo(700,170,27);
+		this.carga = new Carga(5,110);
+		this.linea = new Linea(35,200);
+		this.pelo = Herramientas.cargarImagen("pelotita.png");
+		this.hoyito = Herramientas.cargarImagen("hoyo.png");
+		this.water = Herramientas.cargarImagen("agua.png");
+		this.water2 = Herramientas.cargarImagen("agua.png");
+		this.sand = Herramientas.cargarImagen("arena.png");
+		this.sand2 = Herramientas.cargarImagen("arena.png");
+		this.fondomenu = Herramientas.cargarImagen("menu.jpg");
+		this.musicagana = Herramientas.cargarSonido("Marcianito.wav");
+		
+		// Inicia el juego!
+		
+		this.entorno.iniciar();
+	}
+
+	/**
+	 * Durante el juego, el método tick() será ejecutado en cada instante y 
+	 * por lo tanto es el método más importante de esta clase. Aquí se debe 
+	 * actualizar el estado interno del juego para simular el paso del tiempo 
+	 * (ver el enunciado del TP para mayor detalle).
+	 */
+	
+	public void tick()
+	{
+		// Procesamiento de un instante de tiempo
+		
+		this.entorno.dibujarImagenConCentro(this.campo, 0, 0, 0, 0, 0, 1.1);
+		this.entorno.dibujarImagenConCentro(this.bandera, 670, 75, 0, 0, 0, 1);
+		this.entorno.dibujarImagenConCentro(this.water, agua.getX()-127, agua.getY()-116, 0, 0, 0, 1);
+		this.entorno.dibujarImagenConCentro(this.water2, agua2.getX()-127, agua2.getY()-116, 0, 0, 0, 1);
+		this.entorno.dibujarImagen(this.hoyito, hoyo.getX()+12, hoyo.getY()-26, 0);
+		this.entorno.dibujarImagenConCentro(this.sand, arena.getX()-190, arena.getY()-160, 0, 0, 0, 1);
+		this.entorno.dibujarImagenConCentro(this.sand2, arena2.getX()-190, arena2.getY()-160, 0, 0, 0, 1);
+		
+		//Flecha Aparece o Desaparece
+		
+		if(estadoflecha){
+			flecha.dibujar(this.entorno);
+	        }
+		
+		
+		if(this.pelotita.getVelocidad()>0){
+			this.estadoflecha=false;
+		}
+		
+		//Flecha de dibuja en la nueva posicion de pelotita  
+		
+		if(pelotita.getVelocidad()<=0){
+			this.flecha.setX(this.pelotita.getX()+1);
+			this.flecha.setY(this.pelotita.getY()+1);
+			this.estadoflecha=true;
+		}
+		
+		// Pelota Aparece o Desaparece
+		
+		if(!estadopelota){
+			estadoflecha=false;
+			pelotita.setVelocidad(0);
+		}
+		
+		if (estadopelota){
+			this.entorno.dibujarImagenConCentro(this.pelo, pelotita.getX()-19, pelotita.getY()-19, 0, 0, 0, 1);
+		}
+		
+		//Emboca en el Hoyo
+		
+		if(hoyo.cercaDeHoyo(pelotita, hoyo)){
+			if(pelotita.getVelocidad()>=0){
+				pelotita.restarVelocidad(0.5);
+			}
+			if(this.pelotita.getVelocidad()<4){
+				if(hoyo.colisionHoyo(pelotita,hoyo)){
+					this.contador--;
+					this.pelotita.setVelocidad(0);
+					this.pelotita.setX(hoyo.getX());
+					this.pelotita.setY(hoyo.getY());
+					this.estadoflecha=false;
+					if(this.gana){
+						if(contador<0){
+							this.entorno.dibujarImagenConCentro(this.ganaimagen, 0, 0, 0, 0, 0, 1);
+							this.musicagana.start();
+							estadogolpe=false;
+							this.Finalizo=true;
+							entorno.cambiarFont(Font.SANS_SERIF, 40, Color.WHITE);
+							entorno.escribirTexto("Cantidad de Golpes : " + this.golpes, 360, 585);
+						}
+					}
+				}
+					
+			}
+		}
+		
+		//Texto
+		
+		if (estadogolpe){
+			entorno.cambiarFont(Font.DIALOG_INPUT, 40, Color.BLACK);
+			entorno.escribirTexto("Golpes: " + this.golpes, 550, 30);
+		}
+		
+		//Colision con la Arena
+		
+		if(arena.colisionArena(pelotita)){
+			if(pelotita.getVelocidad()>0){
+				pelotita.restarVelocidad(1);
+			}
+		}
+		// colicion con la otra trampa de arena
+		
+		if(arena2.colisionArena(pelotita)){
+			if(pelotita.getVelocidad()>0){
+				pelotita.restarVelocidad(1.2);
+			}
+		}
+		
+		//Colision con el Agua
+		
+		if (agua.colisionAgua(pelotita)){
+			this.estadopelota=false;
+			pelotita.setX(40);
+			pelotita.setY(60);
+			this.estadopelota=true;
+			pelotita.setVelocidad(0);
+			}
+		//colision con la otra trampa de agua		
+
+		if (agua2.colisionAgua(pelotita)){
+			this.estadopelota=false;
+			pelotita.setX(40);
+			pelotita.setY(60);
+			this.estadopelota=true;
+			pelotita.setVelocidad(0);
+			}
+		
+
+		//Mover Flecha y Apunta la pelota al mismo angulo que flecha.
+		
+		if (pelotita.getVelocidad()<=0){
+			pelotita.setRx(1);
+			pelotita.setRy(1);
+		}
+		
+		if(entorno.estaPresionada(entorno.TECLA_DERECHA)){
+			if (pelotita.getVelocidad()<=0){
+				flecha.girar(0.05);
+				pelotita.setAngulo((flecha.getAngulo()));
+			}
+			}
+
+		if(entorno.estaPresionada(entorno.TECLA_IZQUIERDA)){
+			if (pelotita.getVelocidad()<=0){
+				flecha.girar(-0.05);
+				pelotita.setAngulo((flecha.getAngulo()));
+			
+			}
+		}
+		
+		//Tiro y carga Con Barra Espaciadora
+		
+		if(linea.getY()==200){
+			this.banderabarra=true;
+		}else if(linea.getY()==30){
+			this.banderabarra=false;
+		}
+		
+		if(this.Finalizo==false && this.Empezo){
+			if(entorno.estaPresionada(entorno.TECLA_ESPACIO) && pelotita.getVelocidad()<=0.0 && (linea.getY()<=200 && linea.getY()>=30) && banderabarra==true ){
+				carga.dibujar(this.entorno);
+				linea.dibujar(this.entorno);
+				linea.restarY(2);
+				this.banderacarga=true;
+			}else if (entorno.estaPresionada(entorno.TECLA_ESPACIO) && pelotita.getVelocidad()<=0.0 && (linea.getY()<=200 && linea.getY()>=30) && banderabarra==false ){
+				carga.dibujar(this.entorno);
+				linea.dibujar(this.entorno);
+				linea.sumarY(2);
+				this.banderacarga=true;
+		} 
+		}
+		
+		if(!entorno.estaPresionada(entorno.TECLA_ESPACIO) && pelotita.getVelocidad()<=0.0 && this.banderacarga==true){
+			if (linea.getY()<=200 && linea.getY()>134){
+				if (pelotita.getVelocidad()<=0.0){
+					pelotita.setVelocidad(5);
+					this.golpes ++;
+					this.banderacarga=false;
+				}
+			}else if(linea.getY()<=134 && linea.getY()>68){
+				if (pelotita.getVelocidad()<=0.0){
+					pelotita.setVelocidad(12);
+					this.golpes ++;
+					this.banderacarga=false;
+				}
+			}else if(linea.getY()<=68 && linea.getY()>=30){
+				if (pelotita.getVelocidad()<=0.0){
+					pelotita.setVelocidad(20);
+					this.golpes ++;
+					this.banderacarga=false;
+				}
+			}
+		}
+		
+		//Reducir Velocidad
+		
+		if(pelotita.getVelocidad()>0.0){
+			pelotita.restarVelocidad(0.1);
+		}
+		
+		
+		//Dibuja un menu junto con sus opciones		
+
+		if(menu==true ){
+			this.entorno.dibujarImagenConCentro(this.fondomenu,0,0,0,0,0,1);
+			if(entorno.estaPresionada(entorno.TECLA_ENTER)){
+				this.menu=false;
+				this.Empezo=true;
+			}
+			if (entorno.estaPresionada(entorno.TECLA_DELETE)){
+				System.exit(0);
+			}
+		}
+		if(this.Finalizo==false && this.Empezo==false){
+			if(creditos){
+				if(entorno.estaPresionada(entorno.TECLA_INSERT)){
+					this.entorno.dibujarImagenConCentro(this.credito, 0, 0, 0, 0, 0, 1);
+			}
+		}
+		}
+		
+		//Mover Pelota
+		
+		pelotita.mover();
+
+	}
+	
+	@SuppressWarnings("unused")
+	public static void main(String[] args)
+	{
+		Juego juego = new Juego();
+	}
+}
+----
+
+*CLASE PELOTITA*
+
+[source, java]
+----
+
+public class Pelotita {
+	private double x;
+	private double y;
+	private double angulo;
+	private double velocidad;
+	private double Rx=1;
+	private double Ry=1;
+	private double diametro;
+	
+	Pelotita(double x, double y,  double v, double a, double d){
+		this.x=x;
+		this.y=y;
+		this.velocidad = v;
+		this.angulo = a;
+		this.diametro = d;
+	}
+	
+	public void frenar(){
+		this.velocidad=0.0;
+	}
+	
+	public void mover(){
+		if (this.velocidad>=0){
+			this.x += Rx * (this.velocidad * Math.cos(this.angulo));
+			this.y += Ry * (this.velocidad * Math.sin(this.angulo));
+		}
+		
+			if (this.x <= 5){
+				this.x=5;
+				Rx=Rx*(-1);
+		}
+		
+			if (this.x >= 790){
+				this.x=790;
+				Rx=Rx*(-1);
+		}
+		
+			if (this.y <= 5){
+				this.y = 5;
+				Ry=Ry*(-1);
+		}
+		
+			if (this.y >= 590){
+				this.y = 590;
+				Ry = Ry *(-1);
+		}
+		
+	}
+
+	public void restarVelocidad(double a){
+		this.velocidad = this.velocidad - a;
+	}
+
+	void girar(double modificador){
+		this.angulo = this.angulo + modificador;
+	}
+	
+    // circulo invisible dibujado para obtener dimensiones
+
+    void dibujar(Entorno e){
+		e.dibujarCirculo(x, y, diametro, Color.BLACK);
+	}
+	
+	// GET y SET correspondientes
+
+	public double getX() {
+		return x;
+	}
+
+	public void setX(double x) {
+		this.x = x;
+	}
+
+	public double getY() {
+		return y;
+	}
+
+	public void setY(double y) {
+		this.y = y;
+	}
+
+	public double getAngulo() {
+		return angulo;
+	}
+
+	public void setAngulo(double angulo) {
+		this.angulo = angulo;
+	}
+	
+
+	public double getVelocidad() {
+		return velocidad;
+	}
+
+	public void setVelocidad(double a){
+		this.velocidad = this.velocidad + a;
+	}	
+}
+----
+*CLASE CARGA*
+[source, java]
+----
+
+public class Carga {
+	private double x;
+	private double y;
+	
+	Carga(double x, double y){
+		this.x = x;
+		this.y = y;
+	}
+
+	void dibujar(Entorno e){
+		e.dibujarImagen(Herramientas.cargarImagen("carga.png"), this.x, this.y, 0);
+	}
+}
+----
+
+*CLASE LINEA*
+[source, java]
+----
+
+public class Linea {
+	private double x;
+	private double y;
+	
+	Linea(double x, double y){
+		this.x = x;
+		this.y = y;
+	}
+	
+	void restarY(double y){
+		this.y = this.y - y;
+	}
+	
+	void sumarY(double y){
+		this.y = this.y + y;
+	}
+
+    void dibujar(Entorno e){
+		e.dibujarImagen(Herramientas.cargarImagen("linea.png"), this.x, this.y, 0);
+	}
+	
+    // GET Y SET correspondiente
+	public double getX() {
+		return x;
+	}
+
+	public void setX(double x) {
+		this.x = x;
+	}
+
+	public double getY() {
+		return y;
+	}
+
+	public void setY(double y) {
+		this.y = y;
+	}
+}
+----
+
+
+*CLASE HOYO*
+[source, java]
+----
+
+public class Hoyo {
+	
+	private double x;
+	private double y;
+	private double diametro;
+	
+	public Hoyo(double x, double y,double diametro){
+		this.x=x;
+		this.diametro=diametro;
+		this.y=y;
+	}
+	
+	boolean colisionHoyo(Pelotita pelota,Hoyo hoyo){
+		boolean bandera = false;
+		double x = Math.max(hoyo.getX(), pelota.getX());
+		double xx = x-Math.min(hoyo.getX(), pelota.getX());
+		double y = Math.max(hoyo.getY(), pelota.getY());
+		double yy = y-Math.min(hoyo.getY(), pelota.getY());
+		double distancia = Math.sqrt(xx * xx + yy * yy);
+		if ((distancia - 15)<0){
+			bandera = true;
+		}
+		return bandera;
+	}	
+	
+	boolean cercaDeHoyo(Pelotita pelota,Hoyo hoyo){
+		boolean bandera = false;
+		double x = Math.max(hoyo.getX(), pelota.getX());
+		double xx = x-Math.min(hoyo.getX(), pelota.getX());
+		double y = Math.max(hoyo.getY(), pelota.getY());
+		double yy = y-Math.min(hoyo.getY(), pelota.getY());
+		double distancia = Math.sqrt(xx * xx + yy * yy);
+		if ((distancia - 25)<0){
+			bandera = true;
+		}
+		return bandera;
+	}	
+	
+    // circulo invisible dibujado para obtener dimensiones
+
+	void dibujar(Entorno e){
+		e.dibujarCirculo(this.x, this.y, this.diametro, Color.BLACK);
+	}
+
+	//GET Y SET correspondientes
+
+	public double getX() {
+		return this.x;
+	}
+
+	public void setX(double x) {
+		this.x = x;
+	}
+
+	public double getY() {
+		return this.y;
+	}
+
+	public void setY(double y) {
+		this.y = y;
+	}
+	
+}
+----
+
+*CLASE AGUA*
+[source, java]
+----
+
+public class Agua {
+	double x;
+	double y;
+	double diametro;
+	
+	Agua(double x, double y, double diametro){
+		this.x=x;
+		this.y=y;
+		this.diametro=diametro;
+	}
+
+    boolean colisionAgua (Pelotita pelota) {
+	    return pelota.getX() > this.x - this.diametro / 2 && pelota.getX() < this.x + this.diametro / 2  
+	    && pelota.getY() > this.y - this.diametro / 2 && pelota.getY() < this.y + this.diametro / 2;							//dividirlo por 2, el radio es 90.
+	}
+	
+	// circulo invisible dibujado para obtener dimensiones
+
+    void dibujar(Entorno e){
+		e.dibujarCirculo(this.x, this.y, this.diametro, Color.BLACK);
+	}
+	
+	// GET y SET correspondientes
+
+    public double getDiametro(){
+		return this.diametro;
+	}
+	
+	public void setDiametro(double diametro){
+		this.diametro=diametro;
+	}
+	
+	public double getX() {
+		return this.x;
+	}
+
+	public void setX(double x) {
+		this.x = x;
+	}
+
+	public double getY() {
+		return this.y;
+	}
+
+	public void setY(double y) {
+		this.y = y;
+	}
+	
+}
+----
+
+*CLASE ARENA*
+[source, java]
+----
+
+public class Arena {
+	private double x;
+	private double y;
+	private double ancho;
+	private double alto;
+	
+	Arena(double x, double y,double ancho, double alto){
+		this.x=x;
+		this.y=y;
+		this.alto=alto;
+		this.ancho=ancho;
+	}
+
+    boolean colisionArena(Pelotita pelotita){
+		return pelotita.getX() > (this.x - (this.ancho /2)) && pelotita.getX() < (this.x + (this.ancho /2)) && pelotita.getY() > (this.y - (this.alto/2)) && pelotita.getY() < (this.y + (this.alto /2));
+	}
+
+	// rectangulo invisible dibujado para obtener dimensiones
+
+	void dibujar(Entorno e){
+		e.dibujarRectangulo(this.x, this.y, this.ancho, this.alto, 0, Color.BLACK);
+	}
+
+	// GET y Set correspondientes
+
+	public double getX() {
+		return x;
+	}
+
+	public void setX(double x) {
+		this.x = x;
+	}
+
+	public double getY() {
+		return y;
+	}
+
+	public void setY(double y) {
+		this.y = y;
+	}
+
+	public double getAncho() {
+		return ancho;
+	}
+
+	public void setAncho(double ancho) {
+		this.ancho = ancho;
+	}
+
+	public double getAlto() {
+		return alto;
+	}
+
+	public void setAlto(double alto) {
+		this.alto = alto;
+	}
+}
+----
+
+== Conclusiones
+Se podría concluir que el trabajo fue más desafiante de lo que nos planteamos ya que presentó 
+varias dificultades y nos deja una sensación de insatisfacción al no poder agregar mas dificultades 
+que se pudieron haber implementado en el transcurso del trabajo.
+De otra forma podemos ver al trabajo como un estímulo  para aprender a organizarse de una mejor manera en trabajos 
+que imponen mayor demanda de tiempo y dedicacion. y trabajo en equipo
